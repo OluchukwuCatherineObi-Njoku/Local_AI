@@ -18,7 +18,9 @@ required_packages = [
     "requests",
 ]
 
-init_complete = 1
+init_complete = 0
+chat_history_file = "chat_history.json"
+chat_history = []
 
 def install_lib(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
@@ -32,6 +34,19 @@ def install_packages(req_packages):
             print(f"{package} not found. Installing...")
             install_lib(package)
 
+def check_initialization_complete():
+    global init_complete
+    repo_path = os.path.join(os.getcwd(), "LocalAI")
+    model_path = os.path.join(repo_path, "models", "luna-ai-llama2")
+    tmpl_path = os.path.join(repo_path, "models", "luna-ai-llama2.tmpl")
+    
+    if os.path.isdir(repo_path) and os.path.isfile(model_path) and os.path.isfile(tmpl_path):
+        print("Initialization is complete.")
+        init_complete = 1
+        return True
+    else:
+        print("Initialization is not complete.")
+        return False
 
 def init_setup():
     global init_complete
@@ -74,6 +89,17 @@ def check_docker():
         return False
     return True
 
+def load_chat_history():
+    global chat_history
+    if os.path.exists(chat_history_file):
+        with open(chat_history_file, "r") as file:
+            chat_history = json.load(file)
+            print("Chat history loaded.")
+
+def save_chat_history():
+    with open(chat_history_file, "w") as file:
+        json.dump(chat_history, file)
+        print("Chat history saved.")
 
 def check_containers_running():
     try:
@@ -88,28 +114,48 @@ def check_containers_running():
         print("Failed to check running containers.")
         return False
 
+def handle_chat(){
+    while True:
+        user_input = input("Hey, how are you doing?")
+        if user_input.lower() == "end chat":
+            print("Ending chat. Goodbye!")
+            break
+        response = chat(user_input)
+        print(f"Assistant: {response['choices'][0]['message']['content']}")
+}
+
 def chat(chat_question):
+    global chat_history
 
     url = "http://localhost:8080/v1/chat/completions"
     headers = {"Content-Type": "application/json"}
 
+    chat_history.append({"role": "user", "content": chat_question})
+
     data = {
     "model": "luna-ai-llama2",
-    "messages": [{"role": "user", "content": chat_question}],
+    #"messages": [{"role": "user", "content": chat_question}],
+    "messages": chat_history,
     "temperature": 0.9
     }
 
     response = requests.post(url, headers=headers, json=data)
+    response_data = response.json()
+
+    chat_history.append({"role": "assistant", "content": response_data['choices'][0]['message']['content']})
+
+    save_chat_history()
 
     return response.json()
 
 def main():
     global init_complete
-    if init_complete == 0:
+    if not check_initialization_complete():
         init_setup()
     localai_start()
-    response = chat("Hey, how are you doing?")
-    print(response)
+    load_chat_history()
+
+    handle_chat()
 
 if __name__ == "__main__":
   main()
