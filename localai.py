@@ -8,6 +8,12 @@ import shlex
 import os
 import time
 
+try:
+    import requests
+except ImportError:
+    install_packages(required_packages)
+    import requests
+
 required_packages = [
     "requests",
 ]
@@ -99,11 +105,11 @@ def chat(chat_question):
 
 def main():
     global init_complete
-    install_packages(required_packages)
     if init_complete == 0:
         init_setup()
     localai_start()
-    chat("Hey, how are you doing?")
+    response = chat("Hey, how are you doing?")
+    print(response)
 
 if __name__ == "__main__":
   main()
