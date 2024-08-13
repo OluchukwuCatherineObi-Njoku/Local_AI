@@ -7,12 +7,8 @@ import sys
 import shlex
 import os
 import time
+import json
 
-try:
-    import requests
-except ImportError:
-    install_packages(required_packages)
-    import requests
 
 required_packages = [
     "requests",
@@ -21,6 +17,7 @@ required_packages = [
 init_complete = 0
 chat_history_file = "chat_history.json"
 chat_history = []
+
 
 def install_lib(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
@@ -34,7 +31,15 @@ def install_packages(req_packages):
             print(f"{package} not found. Installing...")
             install_lib(package)
 
+try:
+    import requests
+except ImportError:
+    install_packages(required_packages)
+    import requests
+
+
 def check_initialization_complete():
+
     global init_complete
     repo_path = os.path.join(os.getcwd(), "LocalAI")
     model_path = os.path.join(repo_path, "models", "luna-ai-llama2")
@@ -49,8 +54,10 @@ def check_initialization_complete():
         return False
 
 def init_setup():
+
     global init_complete
     init_complete = 1
+    
     run_command("git clone https://github.com/go-skynet/LocalAI")
     os.chdir("LocalAI")
     run_command("wget https://huggingface.co/TheBloke/Luna-AI-Llama2-Uncensored-GGUF/resolve/main/luna-ai-llama2-uncensored.Q4_0.gguf -O models/luna-ai-llama2")
@@ -59,6 +66,7 @@ def init_setup():
 def localai_start():
     if (check_docker() == True) and (init_complete == 1):
         if not check_containers_running():
+            os.chdir("LocalAI")
             run_command("docker compose up -d --pull always", retries=3, timeout=360)
 
 
@@ -114,15 +122,15 @@ def check_containers_running():
         print("Failed to check running containers.")
         return False
 
-def handle_chat(){
+def handle_chat():
     while True:
-        user_input = input("Hey, how are you doing?")
+        user_input = input("You: ")
         if user_input.lower() == "end chat":
             print("Ending chat. Goodbye!")
             break
         response = chat(user_input)
         print(f"Assistant: {response['choices'][0]['message']['content']}")
-}
+
 
 def chat(chat_question):
     global chat_history
@@ -146,7 +154,8 @@ def chat(chat_question):
 
     save_chat_history()
 
-    return response.json()
+    return response_data
+    
 
 def main():
     global init_complete
@@ -158,4 +167,4 @@ def main():
     handle_chat()
 
 if __name__ == "__main__":
-  main()
+    main()
