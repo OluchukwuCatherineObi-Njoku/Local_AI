@@ -8,8 +8,6 @@ This project is a simple implementation of a chatbot using the LocalAI API. It i
 - [Usage](#usage)
 - [Features](#features)
 - [Configuration](#configuration)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Installation
 
