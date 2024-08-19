@@ -1,4 +1,4 @@
-# LocalAI Chatbot
+# LocalChatAI
 
 This project is a simple implementation of a chatbot using the LocalAI API. It initializes the LocalAI environment, starts the necessary Docker containers, and handles chat interactions with the user.
 
